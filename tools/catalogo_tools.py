@@ -1,39 +1,14 @@
 """Tools de consulta ao catalogo de personagens e times.
 
-Nao existe backend Node: o catalogo mora no proprio Firestore, nas colecoes
-`personagens` e `times`, e o app mobile le as mesmas colecoes. Aqui usamos o
-Admin SDK, entao a leitura ignora as regras.
+Usam o mesmo caminho do app: ComicVine primeiro, Firestore como cache e
+fallback. Ver tools/catalogo_servico.py.
 """
-
-from typing import Any
 
 from langchain_core.tools import tool
 
-from deps.firebase import get_firestore
+from tools import catalogo_servico
 
 LIMITE: int = 3
-
-
-def _buscar(colecao: str, termo: str) -> list[dict[str, Any]]:
-    """Busca por prefixo no campo `nomeBusca` (nome em minusculas, sem acento).
-
-    O Firestore nao tem busca textual: o truque do prefixo e range com \\uf8ff,
-    que casa qualquer sufixo. Por isso o documento guarda `nomeBusca` pronto.
-    """
-    alvo = termo.strip().lower()
-    if not alvo:
-        return []
-
-    docs = (
-        get_firestore()
-        .collection(colecao)
-        .order_by("nomeBusca")
-        .start_at([alvo])
-        .end_at([alvo + ""])
-        .limit(LIMITE)
-        .get()
-    )
-    return [d.to_dict() or {} for d in docs]
 
 
 @tool
@@ -44,7 +19,7 @@ def buscar_personagem(nome: str) -> str:
     nos dados de perfil ja fornecidos na mensagem.
     """
     try:
-        achados = _buscar("personagens", nome)
+        achados = catalogo_servico.buscar_personagens(nome, LIMITE)
     except Exception as exc:
         return f"Nao foi possivel consultar o catalogo: {exc}"
 
@@ -69,7 +44,7 @@ def buscar_time(nome: str) -> str:
     que nao esteja nos dados ja fornecidos.
     """
     try:
-        achados = _buscar("times", nome)
+        achados = catalogo_servico.buscar_times(nome, LIMITE)
     except Exception as exc:
         return f"Nao foi possivel consultar o catalogo: {exc}"
 

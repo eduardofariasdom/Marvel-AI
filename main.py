@@ -6,7 +6,7 @@ from dotenv import load_dotenv
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
-from routers import akinator, battle, jarvis
+from routers import akinator, battle, catalogo, jarvis
 
 load_dotenv()
 
@@ -30,6 +30,7 @@ app.add_middleware(
 app.include_router(jarvis.router)
 app.include_router(battle.router)
 app.include_router(akinator.router)
+app.include_router(catalogo.router)
 
 
 @app.get("/health", tags=["infra"])
