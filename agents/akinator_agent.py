@@ -29,7 +29,12 @@ SYSTEM_PROMPT: str = (
     '{"tipo": "pergunta", "texto": "A pergunta aqui?"}\n'
     "ou\n"
     '{"tipo": "palpite", "texto": "Voce pensou no Homem de Ferro!", '
-    '"personagem": "Homem de Ferro"}'
+    '"personagem": "Homem de Ferro", "personagem_en": "Iron Man"}\n'
+    "\n"
+    "O campo 'personagem_en' e obrigatorio no palpite: e o nome do personagem "
+    "como a Marvel publica em ingles. O app procura a arte dele por esse nome "
+    "no catalogo, que so tem nome em ingles; com o nome em portugues a busca "
+    "nao acha nada."
 )
 
 agent = create_agent(
@@ -84,7 +89,10 @@ def proxima_jogada(historico: list[dict[str, str]]) -> dict[str, str]:
     """
     Decide a proxima pergunta ou o palpite final.
 
-    Devolve sempre {"tipo": "pergunta"|"palpite", "texto": str, "personagem": str}.
+    Devolve sempre {"tipo", "texto", "personagem", "personagem_en"}.
+
+    `personagem` e o nome em portugues, que vai para a tela; `personagem_en` e
+    o nome em ingles, que e por onde o app acha a arte na ComicVine.
     """
     rodadas = len(historico)
     instrucao = _montar_historico(historico)
@@ -107,10 +115,14 @@ def proxima_jogada(historico: list[dict[str, str]]) -> dict[str, str]:
             "tipo": "pergunta",
             "texto": "O personagem que voce pensou e um heroi?",
             "personagem": "",
+            "personagem_en": "",
         }
 
+    personagem = str(dados.get("personagem", "")).strip()
     return {
         "tipo": str(dados.get("tipo", "pergunta")),
         "texto": str(dados.get("texto", "")).strip(),
-        "personagem": str(dados.get("personagem", "")).strip(),
+        "personagem": personagem,
+        # Se o modelo esquecer o ingles, o portugues ainda e melhor que nada.
+        "personagem_en": str(dados.get("personagem_en", "")).strip() or personagem,
     }

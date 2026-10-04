@@ -20,6 +20,7 @@ class Jogada(BaseModel):
     tipo: Literal["pergunta", "palpite"]
     texto: str
     personagem: str = ""
+    personagem_en: str = ""
     rodada: int
     encerrado: bool = False
 
@@ -87,6 +88,7 @@ def comecar(uid: str = Depends(verify_firebase_token)) -> Jogada:
         tipo=jogada["tipo"],
         texto=jogada["texto"],
         personagem=jogada["personagem"],
+        personagem_en=jogada.get("personagem_en", ""),
         rodada=1,
     )
 
@@ -115,6 +117,8 @@ def responder(
             "historico": historico,
             "perguntaAtual": jogada["texto"],
             "palpite": jogada["personagem"] if e_palpite else "",
+            # Guardado para o /finish devolver o mesmo nome de busca.
+            "palpite_en": jogada.get("personagem_en", "") if e_palpite else "",
         }
     )
 
@@ -123,6 +127,7 @@ def responder(
         tipo=jogada["tipo"],
         texto=jogada["texto"],
         personagem=jogada["personagem"],
+        personagem_en=jogada.get("personagem_en", ""),
         rodada=len(historico) + 1,
         encerrado=len(historico) >= LIMITE_PERGUNTAS,
     )
@@ -155,6 +160,7 @@ def encerrar(
         tipo="palpite",
         texto=texto,
         personagem=partida.get("palpite", ""),
+        personagem_en=partida.get("palpite_en", ""),
         rodada=len(historico),
         encerrado=True,
     )
